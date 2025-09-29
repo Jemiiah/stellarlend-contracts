@@ -19,6 +19,8 @@ mod governance;
 use governance::{Governance, GovStorage, Proposal};
 mod flash_loan;
 use flash_loan::FlashLoan;
+mod storage_keys;
+use storage_keys::{CoreKeys, InterestKeys, RiskKeys, CompositeKeyBuilder};
 
 // Global allocator for Soroban contracts
 #[global_allocator]
@@ -39,18 +41,19 @@ mod analytics;
 pub struct ReentrancyGuard;
 
 impl ReentrancyGuard {
-    fn key(env: &Env) -> Symbol { Symbol::new(env, "reentrancy") }
     pub fn enter(env: &Env) -> Result<(), ProtocolError> {
-        let entered = env.storage().instance().get::<Symbol, bool>(&Self::key(env)).unwrap_or(false);
+        let key = CoreKeys::reentrancy_guard(env);
+        let entered = env.storage().instance().get::<Symbol, bool>(&key).unwrap_or(false);
         if entered {
             let error = ProtocolError::ReentrancyDetected;
             return Err(error);
         }
-        env.storage().instance().set(&Self::key(env), &true);
+        env.storage().instance().set(&key, &true);
         Ok(())
     }
     pub fn exit(env: &Env) {
-        env.storage().instance().set(&Self::key(env), &false);
+        let key = CoreKeys::reentrancy_guard(env);
+        env.storage().instance().set(&key, &false);
     }
 }
 
@@ -201,16 +204,14 @@ impl RiskConfig {
 pub struct RiskConfigStorage;
 
 impl RiskConfigStorage {
-    fn key(env: &Env) -> Symbol {
-        Symbol::new(env, "risk_config")
-    }
-
     pub fn save(env: &Env, config: &RiskConfig) {
-        env.storage().instance().set(&Self::key(env), config);
+        let key = RiskKeys::config(env);
+        env.storage().instance().set(&key, config);
     }
 
     pub fn get(env: &Env) -> RiskConfig {
-        env.storage().instance().get(&Self::key(env)).unwrap_or_else(RiskConfig::default)
+        let key = RiskKeys::config(env);
+        env.storage().instance().get(&key).unwrap_or_else(RiskConfig::default)
     }
 }
 
@@ -218,28 +219,24 @@ impl RiskConfigStorage {
 pub struct InterestRateStorage;
 
 impl InterestRateStorage {
-    fn config_key(env: &Env) -> Symbol {
-        Symbol::new(env, "interest_config")
-    }
-
-    fn state_key(env: &Env) -> Symbol {
-        Symbol::new(env, "interest_state")
-    }
-
     pub fn save_config(env: &Env, config: &InterestRateConfig) {
-        env.storage().instance().set(&Self::config_key(env), config);
+        let key = InterestKeys::config(env);
+        env.storage().instance().set(&key, config);
     }
 
     pub fn get_config(env: &Env) -> InterestRateConfig {
-        env.storage().instance().get(&Self::config_key(env)).unwrap_or_else(InterestRateConfig::default)
+        let key = InterestKeys::config(env);
+        env.storage().instance().get(&key).unwrap_or_else(InterestRateConfig::default)
     }
 
     pub fn save_state(env: &Env, state: &InterestRateState) {
-        env.storage().instance().set(&Self::state_key(env), state);
+        let key = InterestKeys::state(env);
+        env.storage().instance().set(&key, state);
     }
 
     pub fn get_state(env: &Env) -> InterestRateState {
-        env.storage().instance().get(&Self::state_key(env)).unwrap_or_else(InterestRateState::initial)
+        let key = InterestKeys::state(env);
+        env.storage().instance().get(&key).unwrap_or_else(InterestRateState::initial)
     }
 
     pub fn update_state(env: &Env) -> InterestRateState {
@@ -329,17 +326,13 @@ impl InterestRateManager {
 pub struct StateHelper;
 
 impl StateHelper {
-    fn position_key(env: &Env, _user: &Address) -> Symbol {
-        Symbol::new(env, &format!("position_{}", "user"))
-    }
-
     pub fn save_position(env: &Env, position: &Position) {
-        let key = Self::position_key(env, &position.user);
+        let key = CoreKeys::user_position(env, &position.user);
         env.storage().instance().set(&key, position);
     }
 
     pub fn get_position(env: &Env, user: &Address) -> Option<Position> {
-        let key = Self::position_key(env, user);
+        let key = CoreKeys::user_position(env, user);
         env.storage().instance().get::<Symbol, Position>(&key)
     }
 }
@@ -348,28 +341,18 @@ impl StateHelper {
 pub struct ProtocolConfig;
 
 impl ProtocolConfig {
-    fn admin_key(env: &Env) -> Symbol {
-        Symbol::new(env, "admin")
-    }
-
-    fn oracle_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle")
-    }
-
-    fn min_collateral_ratio_key(env: &Env) -> Symbol {
-        Symbol::new(env, "min_ratio")
-    }
-
-    fn flash_fee_bps_key(env: &Env) -> Symbol {
-        Symbol::new(env, "flash_fee_bps")
+    pub fn admin_key(env: &Env) -> Symbol {
+        CoreKeys::admin(env)
     }
 
     pub fn set_admin(env: &Env, admin: &Address) {
-        env.storage().instance().set(&Self::admin_key(env), admin);
+        let key = CoreKeys::admin(env);
+        env.storage().instance().set(&key, admin);
     }
 
     pub fn get_admin(env: &Env) -> Option<Address> {
-        env.storage().instance().get::<Symbol, Address>(&Self::admin_key(env))
+        let key = CoreKeys::admin(env);
+        env.storage().instance().get::<Symbol, Address>(&key)
     }
 
     pub fn require_admin(env: &Env, caller: &Address) -> Result<(), ProtocolError> {
@@ -382,7 +365,8 @@ impl ProtocolConfig {
 
     pub fn set_oracle(env: &Env, caller: &Address, oracle: &Address) -> Result<(), ProtocolError> {
         Self::require_admin(env, caller)?;
-        env.storage().instance().set(&Self::oracle_key(env), oracle);
+        let key = CoreKeys::oracle(env);
+        env.storage().instance().set(&key, oracle);
         Ok(())
     }
 
@@ -391,23 +375,27 @@ impl ProtocolConfig {
         if ratio <= 0 {
             return Err(ProtocolError::InvalidInput);
         }
-        env.storage().instance().set(&Self::min_collateral_ratio_key(env), &ratio);
+        let key = CoreKeys::min_collateral_ratio(env);
+        env.storage().instance().set(&key, &ratio);
         Ok(())
     }
 
     pub fn get_min_collateral_ratio(env: &Env) -> i128 {
-        env.storage().instance().get::<Symbol, i128>(&Self::min_collateral_ratio_key(env)).unwrap_or(150)
+        let key = CoreKeys::min_collateral_ratio(env);
+        env.storage().instance().get::<Symbol, i128>(&key).unwrap_or(150)
     }
 
     pub fn set_flash_loan_fee_bps(env: &Env, caller: &Address, bps: i128) -> Result<(), ProtocolError> {
         Self::require_admin(env, caller)?;
         if bps < 0 || bps > 10000 { return Err(ProtocolError::InvalidInput); }
-        env.storage().instance().set(&Self::flash_fee_bps_key(env), &bps);
+        let key = CoreKeys::flash_fee_bps(env);
+        env.storage().instance().set(&key, &bps);
         Ok(())
     }
 
     pub fn get_flash_loan_fee_bps(env: &Env) -> i128 {
-        env.storage().instance().get::<Symbol, i128>(&Self::flash_fee_bps_key(env)).unwrap_or(5) // 0.05%
+        let key = CoreKeys::flash_fee_bps(env);
+        env.storage().instance().get::<Symbol, i128>(&key).unwrap_or(5) // 0.05%
     }
 }
 

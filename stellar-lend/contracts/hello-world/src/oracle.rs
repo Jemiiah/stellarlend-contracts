@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use soroban_sdk::{contracttype, vec, Address, Env, IntoVal, Symbol, Vec};
+use crate::storage_keys::OracleKeys;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[contracttype]
@@ -18,34 +19,40 @@ impl OracleSource {
 pub struct OracleStorage;
 
 impl OracleStorage {
-    fn sources_key(env: &Env) -> Symbol { Symbol::new(env, "oracle_sources") }
-    fn heartbeat_ttl_key(env: &Env) -> Symbol { Symbol::new(env, "oracle_heartbeat_ttl") }
-    fn mode_key(env: &Env) -> Symbol { Symbol::new(env, "oracle_mode") }
-    fn perf_count_key(env: &Env) -> Symbol { Symbol::new(env, "oracle_perf_count") }
-
     pub fn get_sources(env: &Env, asset: &Address) -> Vec<OracleSource> {
-        let key = (Self::sources_key(env), asset.clone());
+        let key = OracleKeys::sources(env, asset);
         env.storage().instance().get(&key).unwrap_or_else(|| Vec::new(env))
     }
 
     pub fn put_sources(env: &Env, asset: &Address, sources: &Vec<OracleSource>) {
-        let key = (Self::sources_key(env), asset.clone());
+        let key = OracleKeys::sources(env, asset);
         env.storage().instance().set(&key, sources);
     }
 
     pub fn get_heartbeat_ttl(env: &Env) -> u64 {
-        env.storage().instance().get(&Self::heartbeat_ttl_key(env)).unwrap_or(300)
+        let key = OracleKeys::heartbeat_ttl(env);
+        env.storage().instance().get(&key).unwrap_or(300)
     }
 
     pub fn set_heartbeat_ttl(env: &Env, ttl: u64) {
-        env.storage().instance().set(&Self::heartbeat_ttl_key(env), &ttl);
+        let key = OracleKeys::heartbeat_ttl(env);
+        env.storage().instance().set(&key, &ttl);
     }
 
-    pub fn set_mode(env: &Env, mode: i128) { env.storage().instance().set(&Self::mode_key(env), &mode); }
-    pub fn get_mode(env: &Env) -> i128 { env.storage().instance().get(&Self::mode_key(env)).unwrap_or(0) } // 0=median,1=twap
+    pub fn set_mode(env: &Env, mode: i128) { 
+        let key = OracleKeys::mode(env);
+        env.storage().instance().set(&key, &mode); 
+    }
+    
+    pub fn get_mode(env: &Env) -> i128 { 
+        let key = OracleKeys::mode(env);
+        env.storage().instance().get(&key).unwrap_or(0) // 0=median,1=twap
+    }
+    
     pub fn inc_perf(env: &Env) -> i128 {
-        let cur: i128 = env.storage().instance().get(&Self::perf_count_key(env)).unwrap_or(0) + 1;
-        env.storage().instance().set(&Self::perf_count_key(env), &cur);
+        let key = OracleKeys::perf_count(env);
+        let cur: i128 = env.storage().instance().get(&key).unwrap_or(0) + 1;
+        env.storage().instance().set(&key, &cur);
         cur
     }
 }

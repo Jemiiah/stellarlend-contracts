@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use soroban_sdk::{contracttype, Address, Env, Map, Symbol, Vec};
+use crate::storage_keys::GovernanceKeys;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[contracttype]
@@ -26,41 +27,52 @@ pub struct VoteReceipt {
 pub struct GovStorage;
 
 impl GovStorage {
-    fn proposals_key(env: &Env) -> Symbol { Symbol::new(env, "gov_proposals") }
-    fn receipts_key(env: &Env) -> Symbol { Symbol::new(env, "gov_receipts") }
-    fn counter_key(env: &Env) -> Symbol { Symbol::new(env, "gov_counter") }
-    fn quorum_bps_key(env: &Env) -> Symbol { Symbol::new(env, "gov_quorum_bps") }
-    fn timelock_key(env: &Env) -> Symbol { Symbol::new(env, "gov_timelock") }
-    fn delegation_key(env: &Env) -> Symbol { Symbol::new(env, "gov_delegation") }
-
     pub fn next_id(env: &Env) -> u64 {
-        let id: u64 = env.storage().instance().get(&Self::counter_key(env)).unwrap_or(0);
-        env.storage().instance().set(&Self::counter_key(env), &(id + 1));
+        let key = GovernanceKeys::proposal_counter(env);
+        let id: u64 = env.storage().instance().get(&key).unwrap_or(0);
+        env.storage().instance().set(&key, &(id + 1));
         id + 1
     }
 
     pub fn save_proposal(env: &Env, p: &Proposal) {
-        let mut map: Map<u64, Proposal> = env.storage().instance().get(&Self::proposals_key(env)).unwrap_or_else(|| Map::new(env));
+        let key = GovernanceKeys::proposals(env);
+        let mut map: Map<u64, Proposal> = env.storage().instance().get(&key).unwrap_or_else(|| Map::new(env));
         map.set(p.id, p.clone());
-        env.storage().instance().set(&Self::proposals_key(env), &map);
+        env.storage().instance().set(&key, &map);
     }
 
     pub fn get_proposal(env: &Env, id: u64) -> Option<Proposal> {
-        let map: Map<u64, Proposal> = env.storage().instance().get(&Self::proposals_key(env)).unwrap_or_else(|| Map::new(env));
+        let key = GovernanceKeys::proposals(env);
+        let map: Map<u64, Proposal> = env.storage().instance().get(&key).unwrap_or_else(|| Map::new(env));
         map.get(id)
     }
 
     pub fn save_receipt(env: &Env, id: u64, r: &VoteReceipt) {
-        let key = (Self::receipts_key(env), id);
+        let key = GovernanceKeys::vote_receipts(env, id);
         let mut map: Map<Address, VoteReceipt> = env.storage().instance().get(&key).unwrap_or_else(|| Map::new(env));
         map.set(r.voter.clone(), r.clone());
         env.storage().instance().set(&key, &map);
     }
 
-    pub fn get_quorum_bps(env: &Env) -> i128 { env.storage().instance().get(&Self::quorum_bps_key(env)).unwrap_or(1000) }
-    pub fn set_quorum_bps(env: &Env, bps: i128) { env.storage().instance().set(&Self::quorum_bps_key(env), &bps); }
-    pub fn get_timelock(env: &Env) -> u64 { env.storage().instance().get(&Self::timelock_key(env)).unwrap_or(60) }
-    pub fn set_timelock(env: &Env, secs: u64) { env.storage().instance().set(&Self::timelock_key(env), &secs); }
+    pub fn get_quorum_bps(env: &Env) -> i128 { 
+        let key = GovernanceKeys::quorum_bps(env);
+        env.storage().instance().get(&key).unwrap_or(1000) 
+    }
+    
+    pub fn set_quorum_bps(env: &Env, bps: i128) { 
+        let key = GovernanceKeys::quorum_bps(env);
+        env.storage().instance().set(&key, &bps); 
+    }
+    
+    pub fn get_timelock(env: &Env) -> u64 { 
+        let key = GovernanceKeys::timelock(env);
+        env.storage().instance().get(&key).unwrap_or(60) 
+    }
+    
+    pub fn set_timelock(env: &Env, secs: u64) { 
+        let key = GovernanceKeys::timelock(env);
+        env.storage().instance().set(&key, &secs); 
+    }
 }
 
 pub struct Governance;
@@ -103,12 +115,12 @@ impl Governance {
     }
 
     pub fn delegate(env: &Env, from: &Address, to: &Address) {
-        let key = (GovStorage::delegation_key(env), from.clone());
+        let key = GovernanceKeys::delegation(env, from);
         env.storage().instance().set(&key, to);
     }
 
     pub fn get_delegate(env: &Env, from: &Address) -> Option<Address> {
-        let key = (GovStorage::delegation_key(env), from.clone());
+        let key = GovernanceKeys::delegation(env, from);
         env.storage().instance().get(&key)
     }
 }
