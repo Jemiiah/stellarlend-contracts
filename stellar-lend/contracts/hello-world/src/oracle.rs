@@ -55,13 +55,13 @@ impl OracleStorage {
         crate::UserManager::require_admin(env, caller)?;
         env.storage()
             .instance()
-            .set(&Self::heartbeat_ttl_key(env), &ttl);
+            .set(&StorageKey::oracle_heartbeat_ttl(env), &ttl);
         Ok(())
     }
 
     pub fn set_mode(env: &Env, caller: &Address, mode: i128) -> Result<(), crate::ProtocolError> {
         crate::UserManager::require_admin(env, caller)?;
-        env.storage().instance().set(&Self::mode_key(env), &mode);
+        env.storage().instance().set(&StorageKey::oracle_mode(env), &mode);
         Ok(())
     }
 
