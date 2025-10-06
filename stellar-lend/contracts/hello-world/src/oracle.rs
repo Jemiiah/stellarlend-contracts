@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::storage_keys::StorageKey;
 use soroban_sdk::{contracttype, vec, Address, Env, IntoVal, Symbol, Vec};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -19,71 +20,71 @@ impl OracleSource {
     }
 }
 
+/// Oracle storage helper using namespaced keys
 pub struct OracleStorage;
 
 impl OracleStorage {
-    fn sources_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_sources")
-    }
-    fn heartbeat_ttl_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_heartbeat_ttl")
-    }
-    fn mode_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_mode")
-    }
-    fn perf_count_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_perf_count")
-    }
-
+    /// Get oracle sources for a specific asset
     pub fn get_sources(env: &Env, asset: &Address) -> Vec<OracleSource> {
-        let key = (Self::sources_key(env), asset.clone());
+        let key = StorageKey::oracle_sources(env, asset);
         env.storage()
             .instance()
             .get(&key)
             .unwrap_or_else(|| Vec::new(env))
     }
 
+    /// Save oracle sources for a specific asset
     pub fn put_sources(env: &Env, asset: &Address, sources: &Vec<OracleSource>) {
-        let key = (Self::sources_key(env), asset.clone());
+        let key = StorageKey::oracle_sources(env, asset);
         env.storage().instance().set(&key, sources);
     }
 
+    /// Get the heartbeat TTL (time-to-live) in seconds
     pub fn get_heartbeat_ttl(env: &Env) -> u64 {
         env.storage()
             .instance()
-            .get(&Self::heartbeat_ttl_key(env))
+            .get(&StorageKey::oracle_heartbeat_ttl(env))
             .unwrap_or(300)
     }
 
+    /// Set the heartbeat TTL (time-to-live) in seconds
     pub fn set_heartbeat_ttl(env: &Env, ttl: u64) {
         env.storage()
             .instance()
-            .set(&Self::heartbeat_ttl_key(env), &ttl);
+            .set(&StorageKey::oracle_heartbeat_ttl(env), &ttl);
     }
 
+    /// Set the oracle aggregation mode (0=median, 1=twap)
     pub fn set_mode(env: &Env, mode: i128) {
-        env.storage().instance().set(&Self::mode_key(env), &mode);
+        env.storage()
+            .instance()
+            .set(&StorageKey::oracle_mode(env), &mode);
     }
+
+    /// Get the oracle aggregation mode (0=median, 1=twap)
     pub fn get_mode(env: &Env) -> i128 {
         env.storage()
             .instance()
-            .get(&Self::mode_key(env))
+            .get(&StorageKey::oracle_mode(env))
             .unwrap_or(0)
-    } // 0=median,1=twap
+    }
+
+    /// Increment and return the performance counter
     pub fn inc_perf(env: &Env) -> i128 {
         let cur: i128 = env
             .storage()
             .instance()
-            .get(&Self::perf_count_key(env))
+            .get(&StorageKey::oracle_perf_count(env))
             .unwrap_or(0)
             + 1;
         env.storage()
             .instance()
-            .set(&Self::perf_count_key(env), &cur);
+            .set(&StorageKey::oracle_perf_count(env), &cur);
         cur
     }
 }
 
+/// Oracle module for price aggregation
 pub struct Oracle;
 
 impl Oracle {

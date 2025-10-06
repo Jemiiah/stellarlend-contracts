@@ -14,6 +14,7 @@ use soroban_sdk::{
 mod flash_loan;
 mod governance;
 mod oracle;
+mod storage_keys;
 
 // Global allocator for Soroban contracts
 #[global_allocator]
