@@ -24,38 +24,7 @@ impl OracleSource {
 pub struct OracleStorage;
 
 impl OracleStorage {
-<<<<<<< HEAD
     /// Get oracle sources for a specific asset
-=======
-    fn sources_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_sources")
-    }
-    fn heartbeat_ttl_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_heartbeat_ttl")
-    }
-    fn mode_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_mode")
-    }
-    fn perf_count_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_perf_count")
-    }
-    fn deviation_bps_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_deviation_bps")
-    }
-    fn trim_count_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_trim_count")
-    }
-    fn twap_window_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_twap_window")
-    }
-    fn price_cache_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_price_cache")
-    }
-    fn price_cache_ttl_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle_price_cache_ttl")
-    }
-
->>>>>>> main
     pub fn get_sources(env: &Env, asset: &Address) -> Vec<OracleSource> {
         let key = StorageKey::oracle_sources(env, asset);
         env.storage()
@@ -102,14 +71,9 @@ impl OracleStorage {
             .instance()
             .get(&StorageKey::oracle_mode(env))
             .unwrap_or(0)
-<<<<<<< HEAD
-    }
+  }
 
     /// Increment and return the performance counter
-=======
-    } // 0=median,1=twap
-
->>>>>>> main
     pub fn inc_perf(env: &Env) -> i128 {
         let cur: i128 = env
             .storage()
