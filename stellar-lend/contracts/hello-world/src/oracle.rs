@@ -89,19 +89,19 @@ impl OracleStorage {
 
     // Helper key methods for additional oracle configuration
     fn deviation_bps_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:deviation_bps")
+        Symbol::new(env, "oracle_deviation_bps")
     }
     fn trim_count_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:trim_count")
+        Symbol::new(env, "oracle_trim_count")
     }
     fn twap_window_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:twap_window")
+        Symbol::new(env, "oracle_twap_window")
     }
     fn price_cache_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:price_cache")
+        Symbol::new(env, "oracle_price_cache")
     }
     fn price_cache_ttl_key(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:price_cache_ttl")
+        Symbol::new(env, "oracle_price_cache_ttl")
     }
 
     /// Maximum deviation from the median allowed before outlier rejection, in bps (1/10000)
