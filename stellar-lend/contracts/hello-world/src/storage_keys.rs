@@ -214,93 +214,93 @@ impl StorageKey {
 
     /// Get the governance proposals key
     pub fn gov_proposals(env: &Env) -> Symbol {
-        Symbol::new(env, "gov:proposals")
+        Symbol::new(env, "gov_proposals")
     }
 
     /// Get the governance receipts key for a specific proposal
     pub fn gov_receipts(env: &Env, proposal_id: u64) -> (Symbol, u64) {
-        (Symbol::new(env, "gov:receipts"), proposal_id)
+        (Symbol::new(env, "gov_receipts"), proposal_id)
     }
 
     /// Get the governance counter key
     pub fn gov_counter(env: &Env) -> Symbol {
-        Symbol::new(env, "gov:counter")
+        Symbol::new(env, "gov_counter")
     }
 
     /// Get the governance quorum basis points key
     pub fn gov_quorum_bps(env: &Env) -> Symbol {
-        Symbol::new(env, "gov:quorum_bps")
+        Symbol::new(env, "gov_quorum_bps")
     }
 
     /// Get the governance timelock key
     pub fn gov_timelock(env: &Env) -> Symbol {
-        Symbol::new(env, "gov:timelock")
+        Symbol::new(env, "gov_timelock")
     }
 
     /// Get the governance delegation key for a delegator
     pub fn gov_delegation(env: &Env, delegator: &Address) -> (Symbol, Address) {
-        (Symbol::new(env, "gov:delegation"), delegator.clone())
+        (Symbol::new(env, "gov_delegation"), delegator.clone())
     }
 
     // ==================== Oracle Key Constructors ====================
 
     /// Get the oracle sources key for a specific asset
     pub fn oracle_sources(env: &Env, asset: &Address) -> (Symbol, Address) {
-        (Symbol::new(env, "oracle:sources"), asset.clone())
+        (Symbol::new(env, "oracle_sources"), asset.clone())
     }
 
     /// Get the oracle heartbeat TTL key
     pub fn oracle_heartbeat_ttl(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:heartbeat_ttl")
+        Symbol::new(env, "oracle_heartbeat_ttl")
     }
 
     /// Get the oracle mode key
     pub fn oracle_mode(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:mode")
+        Symbol::new(env, "oracle_mode")
     }
 
     /// Get the oracle performance counter key
     pub fn oracle_perf_count(env: &Env) -> Symbol {
-        Symbol::new(env, "oracle:perf_count")
+        Symbol::new(env, "oracle_perf_count")
     }
 
     // ==================== AMM Key Constructors ====================
 
     /// Get the AMM pairs registry key
     pub fn amm_pairs(env: &Env) -> Symbol {
-        Symbol::new(env, "amm:pairs")
+        Symbol::new(env, "amm_pairs")
     }
 
     /// Get the AMM swap history key
     pub fn amm_swap_history(env: &Env) -> Symbol {
-        Symbol::new(env, "amm:swap_history")
+        Symbol::new(env, "amm_swap_history")
     }
 
     /// Get the AMM pair counter key
     pub fn amm_pair_count(env: &Env) -> Symbol {
-        Symbol::new(env, "amm:pair_count")
+        Symbol::new(env, "amm_pair_count")
     }
 
     // ==================== Analytics Key Constructors ====================
 
     /// Get the analytics protocol metrics key
     pub fn analytics_protocol(env: &Env) -> Symbol {
-        Symbol::new(env, "analytics:protocol")
+        Symbol::new(env, "analytics_protocol")
     }
 
     /// Get the analytics user metrics key for a specific user
     pub fn analytics_user(env: &Env, user: &Address) -> (Symbol, Address) {
-        (Symbol::new(env, "analytics:user"), user.clone())
+        (Symbol::new(env, "analytics_user"), user.clone())
     }
 
     /// Get the analytics asset metrics key for a specific asset
     pub fn analytics_asset(env: &Env, asset: &Address) -> (Symbol, Address) {
-        (Symbol::new(env, "analytics:asset"), asset.clone())
+        (Symbol::new(env, "analytics_asset"), asset.clone())
     }
 
     /// Get the analytics performance metrics key
     pub fn analytics_performance(env: &Env) -> Symbol {
-        Symbol::new(env, "analytics:performance")
+        Symbol::new(env, "analytics_performance")
     }
 }
 
